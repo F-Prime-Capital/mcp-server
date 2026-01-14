@@ -29,9 +29,9 @@ class DocumentService:
     repo: VCProxyRepository
 
     def filter_documents(self, _auth_token: str, _payload: dict[str, Any]) -> Any:
-        # Fill in: you need a real document index/search endpoint (not present in allowed_endpoints list).
+        # Fill in: a real document index/search endpoint (not present in allowed_endpoints list).
         raise NotImplementedError("No document filter endpoint wired yet.")
 
     def query_document(self, _auth_token: str, _payload: dict[str, Any]) -> Any:
-        # Fill in: you need (1) a doc retrieval endpoint, and (2) a QA/search-in-doc endpoint.
+        # Fill in: (1) a doc retrieval endpoint, and (2) a QA/search-in-doc endpoint.
         raise NotImplementedError("No document query endpoint wired yet.")
