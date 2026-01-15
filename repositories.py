@@ -93,7 +93,7 @@ class SimpleTTLCache:
 def _load_resource_logins_from_secrets_manager(secret_name: str, region_name: str) -> dict[str, Any]:
     """Load a JSON secret (mirrors the Lambda reference code).
 
-    Expected keys (based on your sample):
+    Expected keys:
       - globaldata_token
       - airtable_api
 
@@ -125,7 +125,7 @@ def _normalize_molecule_type(molecule_type: str) -> str:
 
 @dataclass
 class TherapeuticsLandscapeRepository:
-    """Implements your reference Lambda behavior directly in the MCP server.
+    """Implements reference Lambda behavior directly in the MCP server.
 
     Searches:
     - Box metadata table (Airtable)
@@ -201,7 +201,7 @@ class TherapeuticsLandscapeRepository:
         ind = _normalize_indication(indication)
         mol = _normalize_molecule_type(molecule_type)
 
-        # Mirrors your Lambda formula:
+        # Mirrors Lambda formula:
         # AND(FIND(target, SUBSTITUTE(LOWER({genes}),"-",""))>0, FIND(indication, LOWER({indications}))>0,
         #     OR(FIND(mol, LOWER({summary}))>0, FIND(mol, LOWER({technology}))>0))
         formula = (
@@ -233,7 +233,7 @@ class TherapeuticsLandscapeRepository:
         ind = _normalize_indication(indication)
         mol = _normalize_molecule_type(molecule_type)
 
-        # Mirrors your Lambda formula:
+        # Mirrors Lambda formula:
         # AND(FIND(target, SUBSTITUTE(LOWER({pipeline}),"-",""))>0, FIND(indication, LOWER({pipeline}))>0,
         #     FIND(molecule_type, LOWER({pipeline}))>0)
         formula = (

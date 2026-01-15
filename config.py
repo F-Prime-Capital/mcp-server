@@ -28,7 +28,7 @@ class Settings:
     http_timeout_s: float = float(os.getenv("HTTP_TIMEOUT_S", "30"))
 
     # -----------------
-    # Optional AWS Secrets Manager fallback (mirrors your reference Lambda)
+    # Optional AWS Secrets Manager fallback (mirrors reference Lambda)
     # -----------------
     use_secrets_manager: bool = _as_bool(os.getenv("USE_SECRETS_MANAGER"), False)
     resource_logins_secret_name: str = os.getenv("RESOURCE_LOGINS_SECRET_NAME", "resource_logins")
