@@ -1,12 +1,38 @@
 """Configuration management for F-Prime MCP Server."""
 
+import json
+import logging
 from functools import lru_cache
+
+import boto3
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+logger = logging.getLogger(__name__)
+
+
+def get_aws_secrets() -> dict:
+    """Fetch secrets from AWS Secrets Manager."""
+    try:
+        session = boto3.session.Session()
+        client = session.client(
+            service_name='secretsmanager',
+            region_name='us-east-2'
+        )
+        response = client.get_secret_value(SecretId='resource_logins')
+        secrets = json.loads(response['SecretString'])
+        return secrets
+    except Exception as e:
+        logger.warning(f"Failed to fetch AWS secrets: {e}. Falling back to environment variables.")
+        return {}
+
+
+# Fetch secrets once at module load
+_aws_secrets = get_aws_secrets()
+
 
 class Settings(BaseSettings):
-    """Application settings loaded from environment variables."""
+    """Application settings loaded from AWS Secrets Manager and environment variables."""
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -15,9 +41,16 @@ class Settings(BaseSettings):
     )
 
     # Azure Entra ID Configuration
+    # These can come from AWS Secrets Manager or environment variables
     azure_tenant_id: str = Field(..., description="Azure AD Tenant ID")
-    azure_client_id: str = Field(..., description="Azure AD Application (Client) ID")
-    azure_client_secret: str = Field(..., description="Azure AD Client Secret")
+    azure_client_id: str = Field(
+        default=_aws_secrets.get('entra_mcp_clientid', ''),
+        description="Azure AD Application (Client) ID"
+    )
+    azure_client_secret: str = Field(
+        default=_aws_secrets.get('entra_mcp_secret', ''),
+        description="Azure AD Client Secret"
+    )
 
     # F-Prime Authorization
     fprime_group_id: str = Field(..., description="Azure AD Security Group ID for F-Prime members")

@@ -1,5 +1,3 @@
-"""OIDC authentication provider for Microsoft Entra ID."""
-
 import hashlib
 import secrets
 import base64
@@ -207,9 +205,20 @@ class OIDCProvider:
             return resp.json()
 
     def check_fprime_membership(self, claims: TokenClaims) -> bool:
-        """Check if the user is a member of the F-Prime group."""
-        # Check group membership
-        if self.settings.fprime_group_id in claims.groups:
+        """
+        Check if the user is authorized to access the MCP server.
+        
+        If fprime_group_id is configured, checks group membership.
+        If fprime_app_role is configured, checks app roles.
+        If neither is configured, all authenticated tenant users are allowed.
+        """
+        # If no group or role restrictions configured, allow all authenticated users
+        if not self.settings.fprime_group_id and not self.settings.fprime_app_role:
+            logger.info(f"No group/role restrictions - allowing authenticated user {claims.user_id}")
+            return True
+        
+        # Check group membership if configured
+        if self.settings.fprime_group_id and self.settings.fprime_group_id in claims.groups:
             return True
 
         # Check app role if configured
