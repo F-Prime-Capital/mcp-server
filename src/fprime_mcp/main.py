@@ -6,9 +6,11 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+import json
 
 from fprime_mcp.auth.routes import router as auth_router
 from fprime_mcp.auth.oidc_config import get_oidc_config
+from fprime_mcp.tools.therapeutics import query_therapeutics_landscape
 
 # Configure logging
 logging.basicConfig(
@@ -118,19 +120,32 @@ async def list_mcp_tools(request: Request):
     """List available MCP tools (requires authentication)."""
     user = await get_current_user(request)
     
-    # Example tools - replace with your actual tool definitions
     tools = [
         {
-            "name": "fprime_search_projects",
-            "description": "Search F-Prime projects by name, status, or team",
-        },
-        {
-            "name": "fprime_get_document", 
-            "description": "Retrieve an F-Prime internal document by ID",
-        },
-        {
-            "name": "fprime_team_directory",
-            "description": "Look up F-Prime team members and contact info",
+            "name": "therapeutics_landscape",
+            "description": "Query the therapeutics landscape across Box, Websites, and GlobalData sources. Search by target, indication, and/or molecule type.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "target": {
+                        "type": "string",
+                        "description": "Target gene/protein (e.g., 'EGFR', 'HER2', 'PD-1')"
+                    },
+                    "indication": {
+                        "type": "string",
+                        "description": "Disease indication (e.g., 'lung cancer', 'breast cancer')"
+                    },
+                    "molecule_type": {
+                        "type": "string",
+                        "description": "Type of molecule (e.g., 'antibody', 'small molecule', 'cell therapy')"
+                    },
+                    "sources": {
+                        "type": "array",
+                        "items": {"type": "string", "enum": ["box", "websites", "globaldata"]},
+                        "description": "Data sources to query. Defaults to all sources if not specified."
+                    }
+                }
+            }
         },
     ]
     
@@ -151,22 +166,13 @@ async def call_mcp_tool(request: Request):
     
     logger.info(f"User {user.get('email')} calling tool: {tool_name}")
     
-    # Example tool implementation - replace with your actual tools
-    if tool_name == "fprime_search_projects":
-        result = {
-            "query": arguments.get("query", ""),
-            "results": [{"id": "proj-001", "name": "Sample Project"}],
-        }
-    elif tool_name == "fprime_get_document":
-        result = {
-            "id": arguments.get("document_id", "unknown"),
-            "title": "Sample Document",
-            "content": "Document content here...",
-        }
-    elif tool_name == "fprime_team_directory":
-        result = {
-            "members": [{"name": "Jane Smith", "email": "jane@fprime.com"}],
-        }
+    if tool_name == "therapeutics_landscape":
+        result = query_therapeutics_landscape(
+            target=arguments.get("target", ""),
+            indication=arguments.get("indication", ""),
+            molecule_type=arguments.get("molecule_type", ""),
+            sources=arguments.get("sources"),
+        )
     else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -174,7 +180,7 @@ async def call_mcp_tool(request: Request):
         )
     
     return {
-        "content": [{"type": "text", "text": str(result)}],
+        "content": [{"type": "text", "text": json.dumps(result, indent=2)}],
         "is_error": False,
     }
 
