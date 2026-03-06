@@ -1,79 +1,58 @@
-# F-Prime MCP Server
+# F-Prime Remote MCP Server
 
-A secure MCP (Model Context Protocol) server for F-Prime internal tools, protected by Microsoft Entra ID authentication using OIDC.
+This repository now runs as a **true remote MCP server** using `FastMCP` with `streamable-http`.
 
-## Features
+## Teachable Moment: Local vs Remote MCP
 
-- 🔐 Microsoft Entra ID OIDC authentication
-- 🛠️ Extensible tool framework
-- 🚀 FastAPI-based server
-- ☁️ AWS Secrets Manager integration
+- `stdio` transport: your MCP server runs as a local process launched by the client.
+- `streamable-http` transport: clients connect over network to an MCP URL (`/mcp`).
+- This project defaults to remote mode so multiple clients can connect to one hosted server.
+
+## Available Tools
+
+- `therapeutics_landscape`: query therapeutics data from Box/Websites/GlobalData.
+- `search_network_by_natural_language`: call internal network-search backend with semantic and structured filters.
 
 ## Quick Start
 
-### 1. Azure Setup
-
-Ensure your Azure app registration has:
-- Redirect URI: `http://localhost:8000/auth/callback`
-- "Allow public client flows" enabled
-
-### 2. AWS Setup
-
-Credentials are loaded from AWS Secrets Manager (`webpage_token` secret):
-- `entra_mcp_clientid`
-- `entra_mcp_clientsecret`
-
-### 3. Installation
-
+1. Install:
 ```bash
-git clone https://github.com/fprime/fprime-mcp-server.git
-cd fprime-mcp-server
 pip install -e .
 ```
 
-### 4. Run the Server
+2. Configure environment:
+```bash
+cp .env.example .env
+```
+
+3. Run server:
+```bash
+export $(grep -v '^#' .env | xargs)
+python -m fprime_mcp.main
+```
+
+4. Verify:
+```bash
+curl http://localhost:8000/healthz
+```
+
+Remote MCP endpoint:
+- `http://localhost:8000/mcp`
+
+## Docker
 
 ```bash
-uvicorn fprime_mcp.main:app --reload --port 8000
+docker compose up --build
 ```
 
-### 5. Test Authentication
+## Useful Runtime Variables
 
-```bash
-python tests/test_oidc_flow.py
-```
+- `MCP_TRANSPORT`: `streamable-http` (default), `stdio`, or `sse`
+- `MCP_PATH`: HTTP path for MCP transport (default `/mcp`)
+- `NETWORK_SEARCHER_API_URL`: backend endpoint for network search requests
+- `INTERNAL_API_KEY`: bearer token passed to the network-search backend
 
-Or visit `http://localhost:8000/auth/login` in your browser.
+## Security Note
 
-## Project Structure
-
-```
-fprime-mcp-server/
-├── src/fprime_mcp/
-│   ├── __init__.py
-│   ├── main.py              # FastAPI application
-│   └── auth/
-│       ├── __init__.py
-│       ├── oidc_config.py   # OIDC configuration
-│       └── routes.py        # Auth endpoints
-├── tests/
-│   └── test_oidc_flow.py    # Auth flow tests
-├── pyproject.toml
-└── README.md
-```
-
-## API Endpoints
-
-| Endpoint | Description |
-|----------|-------------|
-| `GET /health` | Health check |
-| `GET /auth/login` | Start OIDC login flow |
-| `GET /auth/callback` | OIDC callback handler |
-| `GET /auth/user` | Get current user info |
-| `GET /auth/logout` | Log out |
-| `GET /mcp/tools` | List available tools (auth required) |
-| `POST /mcp/tools/call` | Call a tool (auth required) |
-
-## License
-
-MIT License
+This repo exposes MCP over HTTP. For production, place it behind HTTPS and an auth gateway
+(for example Caddy/Nginx/Cloudflare Access) so only authorized clients can connect.

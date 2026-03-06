@@ -1,7 +1,6 @@
 """F-Prime MCP Tools."""
 
-from fprime_mcp.tools.therapeutics import query_therapeutics_landscape
-
 __all__ = [
+    "search_network_by_natural_language",
     "query_therapeutics_landscape",
 ]
