@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   fprime-mcp-server:
     build:
@@ -8,47 +6,17 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - AZURE_TENANT_ID=${AZURE_TENANT_ID}
-      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
-      - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}
-      - FPRIME_GROUP_ID=${FPRIME_GROUP_ID}
-      - SESSION_SECRET_KEY=${SESSION_SECRET_KEY}
-      - SERVER_ENV=production
-      - REDIS_URL=redis://redis:6379/0
-      - CORS_ORIGINS=${CORS_ORIGINS:-https://claude.ai}
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8000
+      - MCP_PATH=/mcp
+      - MCP_TRANSPORT=streamable-http
+      - NETWORK_SEARCHER_API_URL=${NETWORK_SEARCHER_API_URL}
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    depends_on:
-      redis:
-        condition: service_healthy
     restart: unless-stopped
-    networks:
-      - fprime-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
-    command: redis-server --appendonly yes
-    restart: unless-stopped
-    networks:
-      - fprime-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-networks:
-  fprime-network:
-    driver: bridge
-
-volumes:
-  redis-data:

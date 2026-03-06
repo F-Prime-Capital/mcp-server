@@ -1,4 +1,3 @@
-# F-Prime MCP Server Dockerfile
 FROM python:3.11-slim
 
 # Set environment variables
@@ -35,12 +34,11 @@ RUN chown -R fprime:fprime /app
 # Switch to non-root user
 USER fprime
 
-# Expose port
 EXPOSE 8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f http://localhost:8000/healthz || exit 1
 
-# Run the application
-CMD ["uvicorn", "fprime_mcp.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run the remote MCP server
+CMD ["python", "-m", "fprime_mcp.main"]
